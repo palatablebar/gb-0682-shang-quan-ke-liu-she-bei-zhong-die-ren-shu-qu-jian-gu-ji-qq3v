@@ -12,6 +12,8 @@ def connection():
 
 def save(run_id, body):
     with connection() as db:
+        # INSERT OR IGNORE：同源输入重跑命中同一 run_id，不新增批次/版本，
+        # 已披露结论与复核版本保持不变，仅刷新 latest 指针。
         db.execute('INSERT OR IGNORE INTO runs(id,body) VALUES (?,?)',(run_id,json.dumps(body,ensure_ascii=False)))
         db.execute("INSERT INTO meta(key,value) VALUES ('latest',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",(run_id,))
     return get(run_id)
@@ -32,4 +34,15 @@ def review(run_id, version, decision):
         if cur.rowcount!=1:
             if not db.execute('SELECT 1 FROM runs WHERE id=?',(run_id,)).fetchone():raise DomainError('NOT_FOUND','批次不存在',404)
             raise DomainError('STALE','复核版本已更新，请刷新',409)
+    return get(run_id)
+
+def activate(run_id):
+    """把已归档批次切换为页面展示的最新批次。
+
+    目标批次不存在时整体失败：不改动 latest 指针（保留旧版），也不删除任何记录。
+    """
+    with connection() as db:
+        if not db.execute('SELECT 1 FROM runs WHERE id=?',(run_id,)).fetchone():
+            raise DomainError('NOT_FOUND','批次不存在，切换失败，已保留当前版本',404)
+        db.execute("INSERT INTO meta(key,value) VALUES ('latest',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",(run_id,))
     return get(run_id)

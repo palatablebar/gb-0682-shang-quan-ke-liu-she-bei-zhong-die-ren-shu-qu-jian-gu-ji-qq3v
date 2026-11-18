@@ -30,6 +30,10 @@ def create_app():
         data=request.get_json(silent=True) or {}
         if not isinstance(data.get('version'),int):raise DomainError('VERSION','请提交复核版本')
         return jsonify(store.review(run_id,data['version'],data.get('decision')))
+    @app.post('/api/runs/<run_id>/activate')
+    def activate(run_id):
+        # 切换失败（批次不存在）返回 404，latest 旧版与全部记录均保留。
+        return jsonify(store.activate(run_id))
     @app.get('/api/archive/<run_id>/export.csv')
     def download(run_id):
         state=store.get(run_id)

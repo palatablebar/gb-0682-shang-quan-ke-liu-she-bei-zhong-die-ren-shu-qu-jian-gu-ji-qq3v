@@ -13,6 +13,7 @@
 | M5 人数估界 | 查看并复算人数估界 | `/api/m5_calculate` | `app/modules/m5_calculate/rules.py` | `tests/test_calculate.py` |
 | M6 日汇对账 | 查看并复算日汇对账 | `/api/m6_reconcile` | `app/modules/m6_reconcile/compare.py` | `tests/test_reconcile.py` |
 | M7 报告归档 | 查看并复算报告归档 | `/api/m7_archive` | `app/modules/m7_archive/export_out.py` | `tests/test_archive.py` |
+| M8 披露裁决 | 查看并复算披露裁决 | `/api/m8_disclosure` | `app/modules/m8_disclosure/rules.py` | `tests/test_disclosure.py` |
 
 ## 陷阱登记
 
@@ -31,6 +32,10 @@
 | TRAP-26 | 旧版本复核 | 覆盖新结论 | 事务条件更新 | `app/store.py` | `tests/test_archive.py::test_stale_review` |
 | TRAP-11 | 时区混用 | 同刻不同桶 | UTC归整 | `app/modules/m2_mapping/coerce.py` | `tests/test_versions.py::test_same_instant` |
 | TRAP-19 | 三方约束矛盾 | 输出伪精确数 | 非负原子区域可行检查 | `app/modules/m5_calculate/rules.py` | `tests/test_calculate.py::test_three_way_contradiction` |
+| TRAP-30 | 精确/窄区间反推单商户 | 直接披露精确人数 | 扩区间保留上下界或暂缓 | `app/modules/m8_disclosure/rules.py` | `tests/test_disclosure.py::test_exact_interval_must_be_widened_and_keeps_both_bounds` |
+| TRAP-31 | 相邻区域差额反推小样本 | 只看自身宽度忽略补集 | 补集区间小样本则暂缓 | `app/modules/m8_disclosure/rules.py` | `tests/test_disclosure.py::test_complement_inference_small_sample_is_withheld` |
+| TRAP-32 | 同源重跑重复披露/涨版本 | 每次重跑新建批次 | run_id 幂等 INSERT OR IGNORE | `app/store.py` | `tests/test_disclosure.py::test_same_batch_rerun_creates_no_duplicate_run_or_version` |
+| TRAP-33 | 切换批次失败丢记录 | 失败时覆盖 latest | 先验存在再切指针，404 保留旧版 | `app/store.py` | `tests/test_disclosure.py::test_failed_switch_keeps_old_version_and_all_records` |
 
 ## 对账规则
 
